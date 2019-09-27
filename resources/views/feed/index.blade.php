@@ -13,11 +13,7 @@
           </div>
           <div class="table-container">
             <table id="mytable" class="table table-bordred table-striped">
-             <thead>
-               <th>Title</th>
-               <th>Publisher</th>
-               <th>Source</th>
-             </thead>
+           
              <tbody>
               @if($feeds->count())  
               @foreach($feeds as $feed)  

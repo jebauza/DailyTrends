@@ -51,6 +51,7 @@
 									</div>
 								</div>
 							</div>
+							<img src="{{$feed->image}}"></img>
 							<div class="form-group">
                                 <label for="">Image</label>
                                 <input type="file" name="image">

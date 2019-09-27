@@ -14,7 +14,7 @@
                                 <h5>{{$feed->source}}souce</h5>
                                 <h6>{{$feed->publisher}}</h6>
                                 <img src="{{$feed->image}}" alt="" height="300" width="300">
-                                <p>{{$feed->body}}</p>
+                                <p>{!! $feed->body !!}</p>
                             </article>
                             <div class="row">
  

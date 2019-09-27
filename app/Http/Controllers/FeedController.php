@@ -17,49 +17,70 @@ class FeedController extends Controller
      */
     public function index()
     {
-        $this->getFeedMundoYpais();
-        $feeds = Feed::orderBy('id')->get();
+        $this->getFeedElMundo();
+        //$this->getFeedElPais();
+
+        $feeds = Feed::orderBy('id','DESC')->get();
         return view('feed.index',compact('feeds'));
     }
 
-    private function getFeedMundoYpais()
+    private function getFeedElMundo()
     {
         $cliente = new Client(); 
         $crawler = $cliente->request('GET', 'https://www.elmundo.es/');
-        $crawler->filter('.ue-l-cover-grid__unit article')->each(function ($node,$i=0) {
+        $crawler->filter('.ue-l-cover-grid__unit article')->each(function ($node,$i=0) use($cliente){
            if($i<5)
              {
                 $arr = [] ;
                 $arr['title'] =   $node->filter('.ue-c-cover-content__main span')->text().$node->filter('.ue-c-cover-content__main a h2')->text();
-                $arr['body'] =   "dfdf";
                 $arr['publisher'] =  explode(': ',$node->filter('.ue-c-cover-content__main span.ue-c-cover-content__byline-name')->text())[1];
-                $arr['image'] =   $node->filter('.ue-c-cover-content__media figure img')->attr('src');  
+                $image =  $node->filter('.ue-c-cover-content__image');
+                $arr['image']=$image->count()>0?$image->attr('src'):''; 
                 $arr['source'] =   'https://www.elmundo.es/'; 
+                $link = $node->filter('.ue-c-cover-content__link')->attr('href');
+                $subpage = $cliente->request('GET', $link);
+                Global $texto;
+                $texto = "";
+                $subpage->filter('.ue-c-article__body p')->each(function ($node) {
+                    $GLOBALS['texto'].=" </br>".$node->text();
+                });
+                $arr['body'] = $GLOBALS['texto'];
                 if (!Feed::where('title', '=', $arr['title'])->exists())
                 {
                     $feed = Feed::create($arr);
                 }
              }
-            $i++; //dump($node->text());
+            $i++; 
         });
+    }
 
+    private function getFeedElPais()
+    {
         $cliente = new Client(); 
         $crawler = $cliente->request('GET', 'https://www.elpais.com/');
-        $crawler->filter('.bloque__interior article .articulo')->each(function ($node,$i=0) {
+        
+        $crawler->filter('#bloque_actualidad_destacadas .bloque__interior article.articulo')->each(function ($node,$i=0) use($cliente) {
            if($i<5)
              {
                 $arr = [] ;
-                $arr['title'] =   $node->filter('.ue-c-cover-content__main span')->text().$node->filter('.ue-c-cover-content__main a h2')->text();
-                $arr['body'] =   "dfdf";
-                $arr['publisher'] =  explode(': ',$node->filter('.ue-c-cover-content__main span.ue-c-cover-content__byline-name')->text())[1];
-                $arr['image'] =   $node->filter('.ue-c-cover-content__media figure img')->attr('src');  
-                $arr['source'] =   'https://www.elmundo.es/'; 
+                $link = $node->filter('h2.articulo-titulo a');
+                $arr['title'] = $link->text();
+                $url = $link->attr('href');
+                $arr['publisher'] = $node->filter('span.autor-nombre a')->text();
+                $arr['source'] =   'https://www.elpais.com/'; 
+                $subpage = $cliente->request('GET', $url);
+                Global $texto;
+                $texto = '';
+                $arr['image'] = '';
+                //$arr['image'] = $subpage->filter('.articulo__contenedor>figure meta[itemprop=url]');
+
+                $arr['body'] = $GLOBALS['texto'];
                 if (!Feed::where('title', '=', $arr['title'])->exists())
                 {
                     $feed = Feed::create($arr);
                 }
              }
-            $i++; //dump($node->text());
+            $i++; 
         });
     }
 
