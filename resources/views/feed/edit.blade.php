@@ -37,7 +37,7 @@
 							</div>
  
 							<div class="form-group">
-								<textarea name="body" class="form-control input-sm" placeholder="Body" >{{$feed->body}}</textarea>
+								<textarea name="body" class="form-control input-sm" placeholder="Body" rows="10" style="resize: none">{{$feed->body}}</textarea>
 							</div>
 							<div class="row">
 								<div class="col-xs-6 col-sm-6 col-md-6">

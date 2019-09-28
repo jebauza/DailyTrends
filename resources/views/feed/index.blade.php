@@ -15,7 +15,7 @@
           <div class="table-container">
             @if($feeds->count())  
             @foreach($feeds as $feed)  
-            <article class="articulo">
+            <a href="{{action('FeedController@show', $feed->id)}}" ><article class="articulo">
               <div class="row">
                 @if($feed->image != "")
                 <div class="col-xs-3">
@@ -25,12 +25,12 @@
                 @else
                 <div class="col-xs-12">
                 @endif
-                  <a href="{{action('FeedController@show', $feed->id)}}" ><h2>{{$feed->title}}</h2></a>
+                  <h3>{{$feed->title}}</h3>
                   <span><h5>{{strtoupper($feed->publisher)}} | {{$feed->source}}</h5></span>
                   <p>{{substr($feed->body, 0, 180)}}....</p>
                 </div>
               </div>
-            </article>
+            </article></a>
             @endforeach 
             @else
             <p>No hay Feed</p>
