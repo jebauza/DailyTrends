@@ -36,13 +36,13 @@ class FeedController extends Controller
                 $arr['publisher'] =  explode(': ',$node->filter('.ue-c-cover-content__main span.ue-c-cover-content__byline-name')->text())[1];
                 $image =  $node->filter('.ue-c-cover-content__image');
                 $arr['image']=$image->count()>0?$image->attr('src'):''; 
-                $arr['source'] =   'https://www.elmundo.es/'; 
+                $arr['source'] =   'www.elmundo.es'; 
                 $link = $node->filter('.ue-c-cover-content__link')->attr('href');
                 $subpage = $cliente->request('GET', $link);
                 Global $texto;
                 $texto = "";
                 $subpage->filter('.ue-c-article__body p')->each(function ($node) {
-                    $GLOBALS['texto'].=" </br>".$node->text();
+                    $GLOBALS['texto'].=$node->text()." </br>";
                 });
                 $arr['body'] = $GLOBALS['texto'];
                 if (!Feed::where('title', '=', $arr['title'])->exists())

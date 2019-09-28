@@ -11,7 +11,7 @@
                         <div class="table-container">
                             <article>
                                 <h3>{{$feed->title}}</h3>
-                                <h5>{{$feed->source}}souce</h5>
+                                <h5>{{$feed->source}}</h5>
                                 <h6>{{$feed->publisher}}</h6>
                                 <img src="{{$feed->image}}" alt="" height="300" width="300">
                                 <p>{!! $feed->body !!}</p>

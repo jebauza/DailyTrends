@@ -4,34 +4,40 @@
   <section class="content">
     <div class="col-md-8 col-md-offset-2">
       <div class="panel panel-default">
+        <div class="panel-heading">
+              <div class="boton">
+                  <div class="btn-group">
+                    <a href="{{ route('feed.create') }}" class="btn btn-info" >Añadir Seed</a>
+                  </div>
+              </div>
+        </div>
         <div class="panel-body">
-          <div class="pull-left"><h3>Lista Feed</h3></div>
-          <div class="pull-right">
-            <div class="btn-group">
-              <a href="{{ route('feed.create') }}" class="btn btn-info" >Añadir Seed</a>
-            </div>
-          </div>
           <div class="table-container">
-            <table id="mytable" class="table table-bordred table-striped">
-           
-             <tbody>
-              @if($feeds->count())  
-              @foreach($feeds as $feed)  
-              <tr>
-                <td>{{$feed->title}}</td>
-                <td>{{$feed->publisher}}</td>
-                <td>{{$feed->source}}</td>
-                <td><a class="btn btn-primary btn-xs" href="{{action('FeedController@show', $feed->id)}}" ><span class="glyphicon glyphicon-eye-open"></span></a></td>
-               </tr>
-               @endforeach 
-               @else
-               <tr>
-                <td colspan="8">No hay registro !!</td>
-              </tr>
-              @endif
-            </tbody>
- 
-          </table>
+            @if($feeds->count())  
+            @foreach($feeds as $feed)  
+            <article class="articulo">
+              <div class="row">
+                @if($feed->image != "")
+                <div class="col-xs-3">
+                  <div class="thumbnail"><img src="{{$feed->image}}" alt="" title="{{$feed->title}}"></div>
+                </div>
+                <div class="col-xs-9">
+                @else
+                <div class="col-xs-12">
+                @endif
+                  <a href="{{action('FeedController@show', $feed->id)}}" ><h2>{{$feed->title}}</h2></a>
+                  <span><h5>{{strtoupper($feed->publisher)}} | {{$feed->source}}</h5></span>
+                  <p>{{substr($feed->body, 0, 180)}}....</p>
+                </div>
+              </div>
+            </article>
+            @endforeach 
+            @else
+            <p>No hay Feed</p>
+            @endif  
+
+
+            
         </div>
       </div>
     </div>

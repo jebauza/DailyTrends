@@ -12,7 +12,8 @@
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    //return view('welcome');
+    return redirect('feed');
 });
 
 Route::resource('feed', 'FeedController');
@@ -35,4 +36,4 @@ Route::resource('feed', 'FeedController');
       }
       $i++;
     });
-});*/
+});
