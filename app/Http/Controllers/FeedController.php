@@ -3,13 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Feed;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Goutte\Client;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 
 class FeedController extends Controller
 {
+    private $texto;
+
     /**
      * Display a listing of the resource.
      *
@@ -18,70 +21,79 @@ class FeedController extends Controller
     public function index()
     {
         $this->getFeedElMundo();
-        //$this->getFeedElPais();
+        $this->getFeedElPais();
 
-        $feeds = Feed::orderBy('id','DESC')->get();
+        $feeds = Feed::orderBy(DB::raw('DATE(created_at)'), 'DESC')
+                        ->orderBy(DB::raw("DATE_FORMAT(updated_at, '%Y%m%d%H%i')"), 'DESC')
+                        ->orderBy("title")->get();
+                        
         return view('feed.index',compact('feeds'));
     }
 
     private function getFeedElMundo()
     {
-        $cliente = new Client(); 
+        $cliente = new Client();
         $crawler = $cliente->request('GET', 'https://www.elmundo.es/');
-        $crawler->filter('.ue-l-cover-grid__unit article')->each(function ($node,$i=0) use($cliente){
-           if($i<5)
-             {
-                $arr = [] ;
-                $arr['title'] =   $node->filter('.ue-c-cover-content__main span')->text().$node->filter('.ue-c-cover-content__main a h2')->text();
-                $arr['publisher'] =  explode(': ',$node->filter('.ue-c-cover-content__main span.ue-c-cover-content__byline-name')->text())[1];
-                $image =  $node->filter('.ue-c-cover-content__image');
-                $arr['image']=$image->count()>0?$image->attr('src'):''; 
-                $arr['source'] =   'www.elmundo.es'; 
-                $link = $node->filter('.ue-c-cover-content__link')->attr('href');
-                $subpage = $cliente->request('GET', $link);
-                Global $texto;
-                $texto = "";
-                $subpage->filter('.ue-c-article__body p')->each(function ($node) {
-                    $GLOBALS['texto'].=$node->text()." </br>";
-                });
-                $arr['body'] = $GLOBALS['texto'];
-                if (!Feed::where('title', '=', $arr['title'])->exists())
+
+        try {
+            $crawler->filter('.ue-l-cover-grid__unit article')->each(function ($node,$i = 0) use($cliente){
+                if($i<5)
                 {
-                    $feed = Feed::create($arr);
+                    $title =   $node->filter('.ue-c-cover-content__main span')->text().$node->filter('.ue-c-cover-content__main a h2')->text();
+                    $publisher =  explode(': ',$node->filter('.ue-c-cover-content__main span.ue-c-cover-content__byline-name')->text())[1];
+                    $image =  $node->filter('.ue-c-cover-content__image');
+                    $url_image = $image->count() ? $image->attr('src') : '';
+                    $source = 'www.elmundo.es';
+                    $link = $node->filter('.ue-c-cover-content__link')->attr('href');
+                    $subpage = $cliente->request('GET', $link);
+                    $this->texto = "";
+                    $subpage->filter('.ue-c-article__body p')->each(function ($node){
+                        $this->texto .= $node->text()." </br>";
+                    });
+
+                    $feed = Feed::updateOrCreate(
+                        ['title' => $title, 'source' => $source],
+                        ['publisher' => $publisher, 'image' => $url_image, 'source' => $source, 'body' => $this->texto]
+                    );
                 }
-             }
-            $i++; 
-        });
+                $i++;
+             });
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     private function getFeedElPais()
     {
-        $cliente = new Client(); 
+        $cliente = new Client();
         $crawler = $cliente->request('GET', 'https://www.elpais.com/');
-        
-        $crawler->filter('#bloque_actualidad_destacadas .bloque__interior article.articulo')->each(function ($node,$i=0) use($cliente) {
-           if($i<5)
-             {
-                $arr = [] ;
-                $link = $node->filter('h2.articulo-titulo a');
-                $arr['title'] = $link->text();
-                $url = $link->attr('href');
-                $arr['publisher'] = $node->filter('span.autor-nombre a')->text();
-                $arr['source'] =   'https://www.elpais.com/'; 
-                $subpage = $cliente->request('GET', $url);
-                Global $texto;
-                $texto = '';
-                $arr['image'] = '';
-                //$arr['image'] = $subpage->filter('.articulo__contenedor>figure meta[itemprop=url]');
 
-                $arr['body'] = $GLOBALS['texto'];
-                if (!Feed::where('title', '=', $arr['title'])->exists())
+        try {
+            $crawler->filter('article[class~="story_card story_card_default"]')->each(function ($node, $i = 0) use($cliente) {
+                if($i<5)
                 {
-                    $feed = Feed::create($arr);
+                    $link = $node->filter('h2[class~="headline"] a');
+                    $title = $link->text();
+                    $publisher = $node->filter('span a[class~="author"]')->text();
+                    $source = 'www.elpais.com';
+                    $subpage = $cliente->request('GET', 'https://www.elpais.com'.$link->attr('href'));
+                    $image = $subpage->filter('figure img');
+                    $url_image = $image->count() ? $image->attr('src') : '';
+                    $this->texto = "";
+                    $subpage->filter('div[class~="article_body"] p')->each(function ($node){
+                        $this->texto .= $node->text()." </br>";
+                    });
+
+                    $feed = Feed::updateOrCreate(
+                        ['title' => $title, 'source' => $source],
+                        ['publisher' => $publisher, 'image' => $url_image, 'body' => $this->texto]
+                    );
                 }
-             }
-            $i++; 
-        });
+                $i++;
+             });
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     /**
@@ -116,7 +128,7 @@ class FeedController extends Controller
         $feed->fill(['image'=>$image])->save();
         return redirect()->route('feed.index')->with('success','Registro creado satisfactoriamente');
     }
-    
+
 
     /**
      * Display the specified resource.
@@ -160,7 +172,7 @@ class FeedController extends Controller
             $file = $request->file('image');
             $nombre = $file->getClientOriginalName();
             $path = Storage::disk('public')->put('image',$file);
-            $image = asset($path);  
+            $image = asset($path);
         }
         $feed->fill(['image'=>$image])->save();
         return redirect()->route('feed.index')->with('success','Registro actualizado satisfactoriamente');
