@@ -20,16 +20,4 @@ Route::get('/', function () {
 
 Route::resource('feed', 'FeedController');
 
-Route::get('/prueba', function() {
-
-
-  //antes de esto setear el archivo de configuracion
-  $directory = 'image/';
-  $files = Storage::disk('public')->files($directory);
-  $filesUrl = [];
-  foreach($files as $file)
-  {
-    $filesUrl[] = ['nameFile'=>Str::replaceFirst($directory, '', $file),'urlFile'=>Storage::disk('public')->url($file)];
-  }
-  dd($filesUrl);
-});
+Route::get('/scraping', 'ScrapingController@example')->name('scraping.example');
